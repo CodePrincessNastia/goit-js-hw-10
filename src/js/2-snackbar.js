@@ -1,51 +1,46 @@
-import iziToast from "izitoast";
-import "izitoast/dist/css/iziToast.min.css";
+import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 
-const ourForm = document.querySelector(".form");
+const form = document.querySelector('.form');
 
-ourForm.addEventListener("submit", createPromise);
+form.addEventListener('submit', function (event) {
+  event.preventDefault();
 
-function createPromise(event) {
-    event.preventDefault();
-    const delay = Number.parseInt(ourForm.delay.value);
+  const delayInput = form.elements['delay'];
+  const stateInput = form.elements['state'];
+  let state;
+  for (const radio of stateInput) {
+    if (radio.checked) {
+      state = radio.value;
+      break;
+    }
+  }
+  const delay = delayInput.value;
 
-    const newPromise = new Promise((resolve, reject) => {
-    
-        setTimeout( () => {
-            if (ourForm.elements.state.value === "fulfilled") {
-                resolve(delay);
-            } else {
-                reject(delay);
-                }
-        }, delay);
-    })
+  const notificationPromise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (state === 'fulfilled') {
+        resolve(delay);
+      } else {
+        reject(delay);
+      }
+    }, delay);
+  });
 
-    newPromise
-        .then(() => {
-            iziToast.success({
-                title: 'OK',
-                message: `Fulfilled promise in ${delay} ms`,
-                messageColor: 'white',
-                messageSize: '16',
-                backgroundColor: 'green',
-                theme: 'dark',
-                iconUrl: iconOk,
-                position: 'topRight',
-            });
-        })
-        .catch(() => {
-            iziToast.error({
-                title: 'Error',
-                message: `Rejected promise in ${delay} ms`,
-                messageColor: 'white',
-                messageSize: '16',
-                backgroundColor: 'red',
-                theme: 'dark',
-                iconUrl: iconNeOk,
-                position: 'topRight',
-            });
-        })
-        .finally( () => {
-            ourForm.reset();
-        });
-}
+  notificationPromise.then(
+    delay => {
+      iziToast.success({
+        title: 'Notification',
+        message: `✅ Fulfilled promise in ${delay}ms`,
+        position: 'topRight',
+      });
+    },
+    delay => {
+      iziToast.error({
+        title: 'Notification',
+        message: `❌ Rejected promise in ${delay}ms`,
+        position: 'topRight',
+      });
+    }
+  );
+});

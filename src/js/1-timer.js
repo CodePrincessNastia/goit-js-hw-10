@@ -1,74 +1,77 @@
-import flatpickr from "flatpickr";
-import "flatpickr/dist/flatpickr.min.css";
-import iziToast from "izitoast";
-import "izitoast/dist/css/iziToast.min.css";
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 
-const inputDate = document.querySelector("#datetime-picker");
-const startButton = document.querySelector("button[data-start]");
-
-const dataDays = document.querySelector("span[data-days]");
-const dataHours = document.querySelector("span[data-hours]");
-const dataMinutes = document.querySelector("span[data-minutes]");
-const dataSeconds = document.querySelector("span[data-seconds]");
-
+const startButton = document.querySelector('[data-start]');
+const daysElement = document.querySelector('[data-days]');
+const hoursElement = document.querySelector('[data-hours]');
+const minutesElement = document.querySelector('[data-minutes]');
+const secondsElement = document.querySelector('[data-seconds]');
+const inputDateTimePicker = document.querySelector('#datetime-picker');
 
 let userSelectedDate;
+let countdownInterval;
 
 startButton.disabled = true;
 
-const optionsFlatpackr = {
+const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
-    onClose(selectedDates) {
-  
-      if (selectedDates[0].getTime() <= Date.now()) {
-          iziToast.error({
-                title: 'Error',
-                message: 'Please choose a date in the future',
-                messageColor: 'white',
-                messageSize: '16',
-                backgroundColor: 'red',
-                theme: 'dark',
-                iconUrl: iconErr,
-                position: 'topRight',
-                timeout: 3000,
-                });
-          startButton.disabled = true;
-      } else {
-          startButton.disabled = false;
-          userSelectedDate = selectedDates[0].getTime();
-      };
+  onClose(selectedDates) {
+    userSelectedDate = selectedDates[0];
+    if (userSelectedDate < Date.now()) {
+      iziToast.error({
+        message: 'Please choose a date in the future',
+        position: 'topRight',
+      });
+      startButton.disabled = true;
+    } else {
+      startButton.disabled = false;
+    }
   },
 };
 
-const fp = flatpickr(inputDate, optionsFlatpackr);
+flatpickr(inputDateTimePicker, options);
 
-startButton.addEventListener("click", startCounter);
-
-function startCounter(event) {
-    inputDate.disabled = true;
+startButton.addEventListener('click', () => {
+  if (userSelectedDate) {
+    startTimer();
+    inputDateTimePicker.disabled = true;
     startButton.disabled = true;
+  }
+});
 
-    const intervalID = setInterval(() => {
-        const timeLine = userSelectedDate - Date.now();
-        const { days, hours, minutes, seconds } = convertMs(timeLine);
-        
-        dataDays.textContent = addLeadingZero(days);
-        dataHours.textContent = addLeadingZero(hours);
-        dataMinutes.textContent = addLeadingZero(minutes);
-        dataSeconds.textContent = addLeadingZero(seconds);
+function startTimer() {
+  countdownInterval = setInterval(() => {
+    const delta = userSelectedDate - Date.now();
+    updateTimer(delta);
+    if (delta <= 0) {
+      stopTimer();
+    }
+  }, 1000);
+}
 
-        if (timeLine < 1000) {
-            inputDate.disabled = false;
-            clearInterval(intervalID);
-        }
-    }, 1000);
-};
+function stopTimer() {
+  clearInterval(countdownInterval);
+  daysElement.textContent = '00';
+  hoursElement.textContent = '00';
+  minutesElement.textContent = '00';
+  secondsElement.textContent = '00';
+}
 
-function addLeadingZero(val) {
-   return String(val).padStart(2, "0");
+function updateTimer(delta) {
+  const { days, hours, minutes, seconds } = convertMs(delta);
+  daysElement.textContent = addLeadingZero(days);
+  hoursElement.textContent = addLeadingZero(hours);
+  minutesElement.textContent = addLeadingZero(minutes);
+  secondsElement.textContent = addLeadingZero(seconds);
+}
+
+function addLeadingZero(value) {
+  return String(value).padStart(2, '0');
 }
 
 function convertMs(ms) {
